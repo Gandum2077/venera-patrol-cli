@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "configPaths": ["../Github/venera-configs"],
+  "output": "reports",
+  "defaults": {
+    "concurrency": 2,
+    "stageTimeoutMs": 30000,
+    "sourceTimeoutMs": 300000,
+    "requestTimeoutMs": 15000,
+    "minRequestIntervalMs": 250,
+    "retries": 1,
+    "pages": 2,
+    "imageSamples": 2,
+    "maxRequests": 200,
+    "maxResponseBytes": 20971520,
+    "maxTraceEvents": 2000
+  },
+  "sources": {
+    "copy_manga": {
+      "inputs": {
+        "keyword": "火影",
+        "category": "热血",
+        "categoryParam": "rexue"
+      },
+      "settings": {},
+      "brokenCapabilities": {}
+    },
+    "picacg": {
+      "broken": "示例：填写凭据后删除 broken 字段",
+      "credentials": {
+        "username": "${PICACG_USERNAME}",
+        "password": "${PICACG_PASSWORD}"
+      },
+      "inputs": { "keyword": "漫画" }
+    },
+    "ehentai": {
+      "broken": "示例：填写浏览器凭据后删除 broken 字段",
+      "credentials": {
+        "cookieValues": {
+          "ipb_member_id": "${EH_MEMBER_ID}",
+          "ipb_pass_hash": "${EH_PASS_HASH}",
+          "igneous": "${EH_IGNEOUS}",
+          "star": ""
+        }
+      },
+      "inputs": { "keyword": "language:chinese" },
+      "brokenCapabilities": { "comic.archive": "示例：归档功能暂时损坏" }
+    }
+  }
+}

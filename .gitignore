@@ -1,0 +1,7 @@
+node_modules/
+patrol.config.json
+reports/
+.patrol-data/
+*.tgz
+.env
+.DS_Store

@@ -1,0 +1,26 @@
+name: Test
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: venera-patrol-cli
+      - uses: actions/checkout@v4
+        with:
+          repository: Gandum2077/venera-runtime
+          ref: cfc0e90e3b9b429836c2c059b7d59baca90f314a
+          path: venera-runtime
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci && npm run build:node
+        working-directory: venera-runtime
+      - run: npm ci --ignore-scripts && npm rebuild better-sqlite3 && npm run check && npm test
+        working-directory: venera-patrol-cli

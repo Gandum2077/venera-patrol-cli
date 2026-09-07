@@ -1,0 +1,31 @@
+{
+  "name": "venera-patrol-cli",
+  "version": "1.0.0",
+  "description": "Isolated, observable capability patrol for Venera sources",
+  "type": "module",
+  "license": "GPL-3.0-only",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "bin": {
+    "venera-patrol": "bin/venera-patrol.js"
+  },
+  "exports": "./src/index.js",
+  "files": [
+    "bin",
+    "src",
+    "patrol.example.json",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node --check src/engine.js && node --check src/runner.js && node --check src/observer.js && node --check bin/venera-patrol.js",
+    "patrol": "node bin/venera-patrol.js"
+  },
+  "dependencies": {
+    "venera-runtime": "file:../venera-runtime"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true
+  }
+}
