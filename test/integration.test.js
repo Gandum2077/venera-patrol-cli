@@ -37,6 +37,26 @@ const fixture = fileURLToPath(
   new URL("./fixtures/healthy.js", import.meta.url),
 );
 async function setup(t, { code, sources = {}, limits = {} } = {}) {
+  // Fixture credentials live in an env file just like user installations.
+  sources = structuredClone(sources);
+  const secrets = {};
+  for (const [key, s] of Object.entries(sources)) {
+    if (s.credentials || s.data) {
+      secrets[key] = {
+        ...(s.credentials ? { credentials: s.credentials } : {}),
+        ...(s.data ? { data: s.data } : {}),
+      };
+      delete s.credentials;
+      delete s.data;
+      s.auth = key;
+    }
+  }
+  const previousAuth = process.env.PATROL_AUTH;
+  delete process.env.PATROL_AUTH;
+  t.after(() => {
+    if (previousAuth === undefined) delete process.env.PATROL_AUTH;
+    else process.env.PATROL_AUTH = previousAuth;
+  });
   const dir = await mkdtemp(path.join(tmpdir(), "patrol-test-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   let source = fixture;
@@ -45,6 +65,10 @@ async function setup(t, { code, sources = {}, limits = {} } = {}) {
     await writeFile(source, code);
   }
   const file = path.join(dir, "patrol.json");
+  await writeFile(
+    path.join(dir, ".env"),
+    `PATROL_AUTH=${JSON.stringify(secrets)}\n`,
+  );
   await writeFile(
     file,
     JSON.stringify({

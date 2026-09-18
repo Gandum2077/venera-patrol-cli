@@ -1,0 +1,100 @@
+name: Daily patrol
+on:
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "单个源 key；留空巡检全部源"
+        required: false
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: patrol-pages
+  cancel-in-progress: false
+jobs:
+  patrol:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: venera-patrol-cli
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Gandum2077/venera-runtime
+          ref: cfc0e90e3b9b429836c2c059b7d59baca90f314a
+          path: venera-runtime
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: venera-app/venera-configs
+          path: Github/venera-configs
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build runtime
+        run: npm ci && npm run build:node
+        working-directory: venera-runtime
+      - name: Install patrol
+        run: npm ci --ignore-scripts && npm rebuild better-sqlite3
+        working-directory: venera-patrol-cli
+      - name: Record source revision
+        run: git -C ../Github/venera-configs rev-parse HEAD > .source-commit
+        working-directory: venera-patrol-cli
+      - name: Patrol and prepare sanitized reports
+        id: check
+        continue-on-error: true
+        run: node scripts/ci-patrol.js
+        working-directory: venera-patrol-cli
+        env:
+          PATROL_AUTH: ${{ secrets.PATROL_AUTH }}
+          PATROL_SOURCE: ${{ inputs.source }}
+      - name: Upload public reports even when sources failed
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-patrol-run
+          path: venera-patrol-cli/public-run/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Record patrol failure
+        if: steps.check.outcome == 'failure'
+        run: exit 1
+
+  publish:
+    needs: patrol
+    if: always() && !cancelled() && needs.patrol.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@v4
+        with:
+          name: public-patrol-run
+          path: ${{ runner.temp }}/public-patrol-run
+      - name: Commit complete history and build Pages
+        run: node scripts/publish-results.js --incoming "$RUNNER_TEMP/public-patrol-run" --worktree "$RUNNER_TEMP/patrol-history" --output "$RUNNER_TEMP/patrol-site" --limit "$HISTORY_LIMIT"
+        env:
+          HISTORY_LIMIT: ${{ vars.PATROL_HISTORY_LIMIT || '90' }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/patrol-site
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

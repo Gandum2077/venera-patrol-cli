@@ -5,7 +5,11 @@ import { appendFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { discoverSources, expandEnv, brokenReason } from "./config.js";
+import {
+  discoverSources,
+  resolveSourceSettings,
+  brokenReason,
+} from "./config.js";
 import { createRedactor, sanitizeEvent } from "./redact.js";
 import { summarizeSource, finishReport, markdown } from "./report.js";
 import { PatrolError } from "./errors.js";
@@ -39,7 +43,7 @@ async function runSource(descriptor, config, options) {
     return summarizeSource(source, options.mode);
   }
   try {
-    settings = options.mode === "list" ? {} : expandEnv(settings);
+    settings = options.mode === "list" ? {} : resolveSourceSettings(settings);
   } catch (error) {
     source.stages.push({
       path: "configuration.apply",

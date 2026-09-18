@@ -26,25 +26,16 @@
       "brokenCapabilities": {}
     },
     "picacg": {
-      "broken": "示例：填写凭据后删除 broken 字段",
-      "credentials": {
-        "username": "${PICACG_USERNAME}",
-        "password": "${PICACG_PASSWORD}"
+      "inputs": {
+        "keyword": "漫画"
       },
-      "inputs": { "keyword": "漫画" }
+      "auth": "picacg"
     },
     "ehentai": {
-      "broken": "示例：填写浏览器凭据后删除 broken 字段",
-      "credentials": {
-        "cookieValues": {
-          "ipb_member_id": "${EH_MEMBER_ID}",
-          "ipb_pass_hash": "${EH_PASS_HASH}",
-          "igneous": "${EH_IGNEOUS}",
-          "star": ""
-        }
+      "inputs": {
+        "keyword": "language:chinese"
       },
-      "inputs": { "keyword": "language:chinese" },
-      "brokenCapabilities": { "comic.archive": "示例：归档功能暂时损坏" }
+      "auth": "ehentai"
     }
   }
 }

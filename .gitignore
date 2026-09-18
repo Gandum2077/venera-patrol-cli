@@ -1,7 +1,14 @@
 node_modules/
-patrol.config.json
+patrol.local.json
 reports/
 .patrol-data/
 *.tgz
-.env
+.env*
+!.env.example
+.patrol-history/
+site-dist/
+public-run/
+playwright-report/
+test-results/
+.source-commit
 .DS_Store

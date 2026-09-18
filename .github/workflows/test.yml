@@ -24,3 +24,5 @@ jobs:
         working-directory: venera-runtime
       - run: npm ci --ignore-scripts && npm rebuild better-sqlite3 && npm run check && npm test
         working-directory: venera-patrol-cli
+      - run: npx playwright install --with-deps chromium && npm run test:ui
+        working-directory: venera-patrol-cli

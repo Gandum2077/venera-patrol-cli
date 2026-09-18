@@ -20,13 +20,13 @@ Projects/
 ```bash
 npm ci --ignore-scripts
 npm rebuild better-sqlite3
-cp patrol.example.json patrol.config.json
+cp .env.example .env  # 可选；需要登录的源请填写授权信息
 npm run patrol -- list --config patrol.config.json
 npm run patrol -- check copy_manga --config patrol.config.json
 npm run patrol -- check-all --config patrol.config.json
 ```
 
-`.npmrc` 中的 `install-links=true` 让 npm 把本地依赖打包安装到本项目，而非复用相邻项目的 node_modules。`--ignore-scripts` 避免本地包的 prepare 再次编译相邻运行时；之后只在本项目中构建 SQLite 原生依赖。需要运行时已有 `dist/`。修改运行时后需重新构建运行时并重新安装本项目的依赖。示例中的账号源默认标记为损坏，避免尚未填写环境变量就执行。请修改配置后再巡检。
+`.npmrc` 中的 `install-links=true` 让 npm 把本地依赖打包安装到本项目，而非复用相邻项目的 node_modules。`--ignore-scripts` 避免本地包的 prepare 再次编译相邻运行时；之后只在本项目中构建 SQLite 原生依赖。需要运行时已有 `dist/`。修改运行时后需重新构建运行时并重新安装本项目的依赖。仓库已提供可同步的公开配置；请按需调整每源关键词、设置和损坏标记。未配置授权的能力会明确显示为未完整检查。
 
 也可以 `npm link` 安装 `venera-patrol` 命令。项目无构建步骤；公共 API 从 `src/index.js` 导出。
 
@@ -54,58 +54,73 @@ venera-patrol reproduce reports/<run-id>/report.json --source copy_manga
 
 退出码：`0` 无失败；`1` 有失败，或 `--strict` 下有未完整检查；`2` 参数/配置加载错误；`130` 被中断。`SIGINT` / `SIGTERM` 会停止子进程并尽量写出已有报告。各源独立运行，一个源异常不会阻止其余源。
 
-## 配置
+## 配置与授权分离
 
-本项目配置是 JSON，版本字段必须为 `1`。`configPaths` 接受 Venera `.js` 文件、目录或配置仓库的 `index.json`。目录优先使用索引，避免执行辅助脚本；没有索引时读取目录下 `.js` 文件。所有配置内相对路径都相对于巡检配置文件。`--output` 相对于当前工作目录。
+`patrol.config.json` 是可提交到 Git 的公开配置，包含源文件路径、巡检参数、非敏感 settings、损坏标记和授权引用。`patrol.example.json` 是精简示例。本地私有覆盖可以保存在已忽略的 `patrol.local.json`，通过 `--config` 选择。
 
 ```json
 {
   "version": 1,
-  "configPaths": ["../Github/venera-configs/index.json"],
+  "configPaths": ["../Github/venera-configs"],
   "output": "reports",
-  "defaults": { "concurrency": 2, "pages": 2, "imageSamples": 2 },
   "sources": {
-    "source_key": {
-      "credentials": {
-        "username": "${SOURCE_USERNAME}",
-        "password": "${SOURCE_PASSWORD}",
-        "browserToken": { "dataKey": "token", "value": "${BROWSER_TOKEN}" },
-        "cookies": [
-          {
-            "url": "https://example.com",
-            "values": [
-              {
-                "name": "session",
-                "value": "${SESSION_COOKIE}",
-                "domain": "example.com",
-                "path": "/",
-                "secure": true
-              }
-            ]
-          }
-        ]
-      },
-      "settings": { "imageQuality": "original" },
-      "data": { "customSessionField": "${SOURCE_SESSION}" },
-      "inputs": {
-        "keyword": "测试关键词",
-        "comicId": "known-comic-id",
-        "epId": "known-chapter-id"
-      },
-      "brokenCapabilities": {
-        "categoryComics.ranking": "排行接口维护中",
-        "explore[1].load": "第二个发现页已损坏"
-      }
+    "picacg": {
+      "auth": "picacg",
+      "inputs": { "keyword": "漫画" },
+      "settings": {},
+      "brokenCapabilities": { "comic.archive": "归档维护中" }
     }
   }
 }
 ```
 
-上例展示字段形状，**不是任何真实源的通用凭据映射**。只保留所用源需要的字段。`sources` 按配置源的 `key` 匹配；索引提供的 key 用于加载前选择及整源跳过。直接提供 JS 时初始标识是文件名，加载后按实际 key 应用设置；需要在加载前跳过这种源时请使用文件名标识，或提供索引。
+`configPaths` 接受本地 JS、目录或 `index.json`，相对路径按配置文件所在目录解析；目录优先使用索引。`sources` 按源 key 匹配，直接 JS 路径在加载前以文件名标识。
 
-`${ENV_NAME}` 在执行选中源时展开，缺失变量会明确报错；手动跳过的源不要求填凭据。`patrol.config.json`、`.env` 和报告目录已加入 `.gitignore`。程序不会自动读取 `.env`；可用 shell 导出变量或 Node 的 `--env-file`。
+实际授权信息在 `PATROL_AUTH` 环境变量中保存为 JSON：
+
+```json
+{
+  "picacg": {
+    "credentials": { "username": "实际用户名", "password": "实际密码" }
+  },
+  "custom_source": {
+    "credentials": {
+      "browserToken": { "dataKey": "token", "value": "实际浏览器 Token" },
+      "cookies": [
+        {
+          "url": "https://example.com",
+          "values": [
+            {
+              "name": "session",
+              "value": "实际 Cookie",
+              "domain": "example.com",
+              "path": "/"
+            }
+          ]
+        }
+      ]
+    },
+    "data": { "account": "按该源要求填写的账号状态" },
+    "settings": { "apiToken": "敏感设置值" }
+  }
+}
+```
+
+公开配置中的 `auth` 对应此 JSON 的一级键。授权条目只能包含 `credentials`、`data` 和 `settings`，不能通过 Secret 改写巡检范围或启用写操作。Secret 中的 settings 覆盖公开同名设置。
+
+本地复制 `.env.example` 为 `.env` 后填写；JSON 用单引号包裹并保持在一行，例如：
+
+```dotenv
+PATROL_AUTH='{"picacg":{"credentials":{"username":"user","password":"password"}}}'
+```
+
+CLI 默认自动读取配置文件同目录的 `.env`，已有环境变量优先。可使用 `--env-file /path/to/.env` 指定文件，或 `--no-env` 禁用本地加载。`.env*` 已加入 `.gitignore`，只有不含真实凭据的 `.env.example` 可提交。GitHub Actions 使用同名的 `PATROL_AUTH` Secret，粘贴上面的 JSON 本身，不包含 shell 单引号。
+
+缺少授权条目会记录 `credentials_missing`，仍检查可公开访问的能力。`${ENV_NAME}` 引用继续可用，但变量缺失会报错。公开文件禁止直接写 `credentials`、非空 `data` 或明显敏感的 settings 常量；调用登录接口的显式 case 也必须使用环境引用。旧配置请将这些字段移到 `PATROL_AUTH`，并用 `auth` 引用。
 
 ### 登录与设置
+
+下列 credentials/data 字段放在 Secret 的授权条目内；普通 settings 可放公开配置，敏感 settings 放 Secret。
 
 | 字段                            | 行为                                                                                           |
 | ------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -159,6 +174,8 @@ venera-patrol reproduce reports/<run-id>/report.json --source copy_manga
 
 ## 检查范围与报告
 
+空函数（例如 Hitomi 的 `loadNext(next) {}`，以及仅有注释、空语句的函数）视为能力不存在：不会枚举、调用或计入覆盖率。有 return、throw 或其他语句的函数仍视为已实现。判断通过 Acorn 解析函数体完成，不执行函数探测。
+
 流程为：加载 → 递归能力枚举 → 应用配置 → 等待 init → 登录 → 搜索/发现/分类/排行/收藏 → 详情 → 章节 → 图片回调 → 实际下载 → 响应转换/图片变换 → 解码。同时覆盖只读评论、缩略图、归档信息/下载 URL、链接解析、标签回调。归档检查不会下载整个压缩包。
 
 报告中的 `capabilities` 包含函数、容器、声明字段及数组下标，例如 `account.loginWithCookies.validate`、`categoryComics.ranking.loadWithNext`、`explore[0].load`。`stages` 描述真实执行结果；声明字段仅枚举，设置和分类等另做结构校验。init 动态添加的能力会重新枚举；图片回调返回的 `onResponse`、`modifyImage`、`onLoadFailed` 也会追加记录。下载成功时不故意制造失败，`onLoadFailed` 报告 `not_triggered`。
@@ -206,4 +223,12 @@ npm test
 
 测试使用真实 venera-runtime、独立进程和离线图片/接口夹具，不依赖漫画网站在线状态。覆盖能力枚举、凭据/设置、章节、分页、图片变换、脱敏、传输限制、故障分类和强制终止。CI 会检出固定版本的运行时依赖并运行测试。
 
-日常任务可在外部调度器或 GitHub Actions 中运行 `check-all`，上传整个运行目录，再按 `failed-sources.json` 或经复核的 `repairable-sources.json` 启动后续修复。本项目不会自动发消息、启动 Agent 或创建 PR。
+内置 `Daily patrol` 每天在 UTC 02:23（北京时间 10:23）运行，并支持手动全量或单源巡检。脱敏结果保存到 `patrol-results` 分支，随后部署 GitHub Pages。前端变更会触发 `Refresh Pages`，使用已保存历史重新部署。
+
+完整设置步骤、Secrets 格式、历史保留规则和本地预览见 [GitHub Actions 与 Pages](docs/actions.md)。本项目不会自动发消息、启动修复 Agent 或创建 PR。
+
+```bash
+# 浏览器界面测试（首次需要安装 Chromium）
+npx playwright install chromium
+npm run test:ui
+```

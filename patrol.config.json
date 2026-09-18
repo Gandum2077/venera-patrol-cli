@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "configPaths": ["../Github/venera-configs"],
+  "output": "reports",
+  "defaults": {
+    "concurrency": 2,
+    "stageTimeoutMs": 30000,
+    "sourceTimeoutMs": 300000,
+    "requestTimeoutMs": 15000,
+    "minRequestIntervalMs": 250,
+    "retries": 1,
+    "pages": 2,
+    "imageSamples": 2,
+    "maxRequests": 200,
+    "maxResponseBytes": 20971520,
+    "maxTraceEvents": 2000
+  },
+  "sources": {
+    "copy_manga": {
+      "inputs": {
+        "keyword": "火影",
+        "category": "热血",
+        "categoryParam": "rexue"
+      },
+      "settings": {},
+      "brokenCapabilities": {}
+    },
+    "picacg": {
+      "inputs": {
+        "keyword": "漫画"
+      },
+      "auth": "picacg"
+    },
+    "ehentai": {
+      "inputs": {
+        "keyword": "language:chinese"
+      },
+      "auth": "ehentai"
+    },
+    "Komiic": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "baozi": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "nhentai": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "wnacg": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "jm": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "manga_dex": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "ikmmh": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "shonen_jump_plus": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "hitomi": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "comick": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "ykmh": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "zaimanhua": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "ManHuaGui": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "manwaba": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "lanraragi": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "komga": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "comic_walker": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "mh1234": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "ccc": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "goda": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "mh18": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "mxs": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "manhuaren": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "hcomic": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "jcomic": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "hot_manga": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "kavita": {
+      "inputs": {
+        "keyword": "love"
+      }
+    },
+    "happy": {
+      "inputs": {
+        "keyword": "love"
+      }
+    }
+  }
+}

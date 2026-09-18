@@ -5,6 +5,7 @@ import {
   resolveCapability,
   isMutation,
   summarize,
+  isImplementedFunction,
 } from "./capabilities.js";
 import { brokenReason } from "./config.js";
 import { PatrolError, Skip, assert, classify } from "./errors.js";
@@ -245,9 +246,18 @@ export async function inspectSource(job, send) {
       }
       config ??= {};
     }
+    config = { ...config };
+    for (const key of ["onResponse", "onLoadFailed"])
+      if (
+        typeof config[key] === "function" &&
+        !isImplementedFunction(config[key])
+      )
+        delete config[key];
     for (const key of ["onResponse", "modifyImage", "onLoadFailed"]) {
       if (
         config[key] &&
+        (typeof config[key] !== "function" ||
+          isImplementedFunction(config[key])) &&
         !capabilities.some((c) => c.path === `${hookPath}.${key}`)
       )
         capabilities.push({
@@ -297,7 +307,7 @@ export async function inspectSource(job, send) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const before = results.length;
       let bytes = await download(config);
-      if (bytes && typeof config.onResponse === "function") {
+      if (bytes && isImplementedFunction(config.onResponse)) {
         bytes = await step(
           `${hookPath}.onResponse`,
           async () => {
@@ -355,7 +365,7 @@ export async function inspectSource(job, send) {
           send({ kind: "stage.update", result });
         }
         if (
-          typeof config.onLoadFailed === "function" &&
+          isImplementedFunction(config.onLoadFailed) &&
           !completed.has(`${hookPath}.onLoadFailed`)
         )
           await step(
@@ -376,7 +386,7 @@ export async function inspectSource(job, send) {
       if (
         !failures.length ||
         attempt > 0 ||
-        typeof config.onLoadFailed !== "function"
+        !isImplementedFunction(config.onLoadFailed)
       )
         return;
       recoverable.push(...failures);
@@ -548,6 +558,16 @@ export async function inspectSource(job, send) {
       capabilities = enumerate(source);
       send({ kind: "capabilities", capabilities });
     }
+    if (settings.authMissing)
+      await step(
+        "authentication",
+        () =>
+          skip(
+            "credentials_missing",
+            `No PATROL_AUTH entry for ${settings.auth}; public capabilities will still be checked`,
+          ),
+        { validate: false },
+      );
     const contracts = await step(
       "configuration.capabilities",
       () => {

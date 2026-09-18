@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="description" content="Venera 漫画源巡检结果与历史记录" />
+    <title>Venera · 源巡检</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#source-detail">跳到巡检详情</a>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">V</span>
+        <div>
+          <strong>Venera</strong><span class="brand-label">源巡检</span>
+        </div>
+      </div>
+      <span class="top-note">能力状态 · 请求记录 · 历史追踪</span>
+    </header>
+    <main class="shell">
+      <section class="page-heading">
+        <div>
+          <p class="eyebrow">SOURCE PATROL</p>
+          <h1>巡检概览</h1>
+          <p class="muted">查看每个漫画源的能力状态，定位失败发生在哪一步。</p>
+        </div>
+        <a
+          id="actions-link"
+          class="text-link"
+          hidden
+          target="_blank"
+          rel="noopener noreferrer"
+          >查看 Actions ↗</a
+        >
+      </section>
+      <section class="run-toolbar" aria-label="历史巡检">
+        <div class="run-selector">
+          <label for="run-select">巡检记录</label
+          ><select id="run-select" disabled>
+            <option>正在加载记录…</option></select
+          ><span id="latest-badge" class="pill neutral" hidden>最近一次</span>
+        </div>
+        <div class="history-buttons">
+          <button id="newer" disabled>← 较新</button
+          ><button id="older" disabled>较早 →</button
+          ><button id="latest" disabled>回到最近</button>
+        </div>
+      </section>
+      <p id="run-meta" class="run-meta muted"></p>
+      <div id="notice" role="status" aria-live="polite">正在加载巡检记录…</div>
+      <section
+        id="summary"
+        class="summary-grid"
+        aria-label="巡检汇总"
+        hidden
+      ></section>
+      <section id="workspace" class="workspace" hidden>
+        <aside class="source-panel" aria-label="漫画源列表">
+          <div class="panel-heading">
+            <h2>漫画源</h2>
+            <span id="source-count" class="muted"></span>
+          </div>
+          <label class="sr-only" for="source-search">搜索漫画源名称或 key</label
+          ><input
+            id="source-search"
+            type="search"
+            placeholder="搜索名称或 key"
+            autocomplete="off"
+          />
+          <label class="sr-only" for="status-filter">筛选源状态</label
+          ><select id="status-filter">
+            <option value="all">全部状态</option>
+            <option value="failed">失败</option>
+            <option value="partial">未完整检查</option>
+            <option value="passed">通过</option>
+            <option value="skipped">手动跳过</option>
+            <option value="listed">仅枚举</option>
+          </select>
+          <nav id="source-list" aria-label="选择漫画源"></nav>
+        </aside>
+        <article
+          id="source-detail"
+          class="detail-panel"
+          tabindex="-1"
+        ></article>
+      </section>
+      <footer>
+        巡检结果反映本次样本与参数的执行情况。未检查的能力不会计为通过。<span
+          id="updated-at"
+        ></span>
+      </footer>
+    </main>
+    <noscript
+      >请启用 JavaScript 以浏览报告；完整 JSON 报告保存在本仓库的 patrol-results
+      分支。</noscript
+    >
+  </body>
+</html>

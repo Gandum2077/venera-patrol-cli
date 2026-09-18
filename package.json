@@ -15,17 +15,28 @@
     "bin",
     "src",
     "patrol.example.json",
-    "README.md"
+    "README.md",
+    "site",
+    "scripts"
   ],
   "scripts": {
     "test": "node --test test/*.test.js",
-    "check": "node --check src/engine.js && node --check src/runner.js && node --check src/observer.js && node --check bin/venera-patrol.js",
-    "patrol": "node bin/venera-patrol.js"
+    "check": "node scripts/check.js",
+    "patrol": "node bin/venera-patrol.js",
+    "pages:build": "node scripts/pages.js build",
+    "pages:preview": "node scripts/serve-site.js",
+    "report:archive": "node scripts/pages.js archive",
+    "test:ui": "playwright test"
   },
   "dependencies": {
+    "acorn": "^8.18.0",
     "venera-runtime": "file:../venera-runtime"
   },
   "allowScripts": {
     "better-sqlite3@12.11.1": true
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "yaml": "^2.9.0"
   }
 }

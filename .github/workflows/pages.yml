@@ -1,0 +1,38 @@
+name: Refresh Pages
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "site/**"
+      - "src/archive.js"
+      - "scripts/pages.js"
+      - "scripts/publish-results.js"
+      - ".github/workflows/pages.yml"
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: patrol-pages
+  cancel-in-progress: false
+jobs:
+  pages:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build from saved history (empty on first deployment)
+        run: node scripts/publish-results.js --build-only --worktree "$RUNNER_TEMP/patrol-history" --output "$RUNNER_TEMP/patrol-site"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/patrol-site
+      - id: deployment
+        uses: actions/deploy-pages@v4

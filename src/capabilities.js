@@ -1,3 +1,29 @@
+import { parse } from "acorn";
+
+const implementationCache = new WeakMap();
+export function isImplementedFunction(value) {
+  if (typeof value !== "function") return false;
+  if (implementationCache.has(value)) return implementationCache.get(value);
+  const text = Function.prototype.toString.call(value);
+  let fn;
+  try {
+    fn = parse(`(${text})`, { ecmaVersion: "latest" }).body[0].expression;
+  } catch {
+    try {
+      fn = parse(`({${text}})`, { ecmaVersion: "latest" }).body[0].expression
+        .properties[0].value;
+    } catch {
+      implementationCache.set(value, true);
+      return true;
+    }
+  }
+  const implemented =
+    fn.body?.type !== "BlockStatement" ||
+    fn.body.body.some((s) => s.type !== "EmptyStatement" && !s.directive);
+  implementationCache.set(value, implemented);
+  return implemented;
+}
+
 export const roots = [
   "init",
   "account",
@@ -13,6 +39,7 @@ export function enumerate(source) {
   const result = [];
   function visit(value, path, ancestors = new Set()) {
     if (value == null) return;
+    if (typeof value === "function" && !isImplementedFunction(value)) return;
     const type =
       typeof value === "function"
         ? "function"
@@ -38,7 +65,14 @@ export function resolveCapability(source, path) {
     throw new Error("Invalid capability path");
   const key = parts.pop();
   const owner = parts.reduce((v, k) => v?.[k], source);
-  return { owner, value: owner?.[key] };
+  const value = owner?.[key];
+  return {
+    owner,
+    value:
+      typeof value === "function" && !isImplementedFunction(value)
+        ? undefined
+        : value,
+  };
 }
 export function isMutation(path) {
   return /^(favorites\.(add|delete)|comic\.(send|vote|like|star)|account\.logout)|\.callback$|\.onTap$/.test(

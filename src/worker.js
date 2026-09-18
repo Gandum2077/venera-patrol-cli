@@ -1,13 +1,15 @@
 import { inspectSource } from "./engine.js";
 import { createRedactor, sanitizeEvent } from "./redact.js";
-import { expandEnv } from "./config.js";
+import { resolveSourceSettings } from "./config.js";
 process.once("message", async (job) => {
   let redact = createRedactor(job.settings);
   const send = (event) => {
     if (process.connected) process.send(sanitizeEvent(event, redact));
   };
   job.resolveSettings = (key) => {
-    const settings = expandEnv(job.sourceSettings[key] ?? job.settings);
+    const settings = resolveSourceSettings(
+      job.sourceSettings[key] ?? job.settings,
+    );
     redact = createRedactor(settings);
     return settings;
   };

@@ -1,6 +1,7 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { PatrolError } from "./errors.js";
+import { applyAuth, loadDotEnv, validatePublicConfig } from "./auth.js";
 
 export const defaults = Object.freeze({
   stageTimeoutMs: 30000,
@@ -86,6 +87,7 @@ export function validateConfig(raw) {
       if (
         ![
           "broken",
+          "auth",
           "brokenCapabilities",
           "credentials",
           "settings",
@@ -104,6 +106,11 @@ export function validateConfig(raw) {
       typeof s.broken !== "string"
     )
       fail(`${key}.broken must be boolean or reason`);
+    if (
+      s.auth !== undefined &&
+      (typeof s.auth !== "string" || !/^[\w-]+$/.test(s.auth))
+    )
+      fail(`${key}.auth must be an authorization identifier`);
     if (s.allowMutations !== undefined && typeof s.allowMutations !== "boolean")
       fail(`${key}.allowMutations must be boolean`);
     for (const field of [
@@ -212,9 +219,16 @@ export function validateConfig(raw) {
   }
   return { ...raw, defaults: policy, sources: raw.sources ?? {} };
 }
-export async function readConfig(file) {
+export async function readConfig(file, { envFile } = {}) {
   const filename = path.resolve(file);
+  if (envFile !== false)
+    await loadDotEnv(
+      envFile
+        ? path.resolve(envFile)
+        : path.join(path.dirname(filename), ".env"),
+    );
   const raw = validateConfig(JSON.parse(await readFile(filename, "utf8")));
+  validatePublicConfig(raw);
   return {
     ...raw,
     filename,
@@ -223,6 +237,16 @@ export async function readConfig(file) {
     ),
     output: path.resolve(path.dirname(filename), raw.output ?? "reports"),
   };
+}
+export function resolveSourceSettings(settings) {
+  const resolved = expandEnv(applyAuth(settings));
+  const { authMissing, ...validated } = resolved;
+  validateConfig({
+    version: 1,
+    configPaths: ["."],
+    sources: { source: validated },
+  });
+  return resolved;
 }
 export async function discoverSources(config) {
   const found = new Map();

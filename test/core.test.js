@@ -58,7 +58,9 @@ test("environment substitution fails closed and manual skip matches descendants"
 test("inventory includes nested functions and declarative leaves, preserves this", () => {
   const source = {
     account: {
-      login() {},
+      login() {
+        return true;
+      },
       loginWithCookies: {
         fields: ["x"],
         validate() {
@@ -66,7 +68,13 @@ test("inventory includes nested functions and declarative leaves, preserves this
         },
       },
     },
-    explore: [{ load() {} }],
+    explore: [
+      {
+        load() {
+          return [];
+        },
+      },
+    ],
   };
   const inventory = enumerate(source);
   assert.ok(

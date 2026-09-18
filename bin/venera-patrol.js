@@ -16,6 +16,8 @@ Options:
   --config <file>       巡检配置（默认 patrol.config.json）
   --output <dir>        报告输出目录；每次运行创建独立子目录
   --source <key>        单源筛选
+  --env-file <file>     .env 路径（默认配置文件同目录的 .env）
+  --no-env             不读取本地 .env（Actions 使用此选项）
   --strict             未完整检查也返回退出码 1（手动整源跳过除外）
   --json               stdout 仅输出 JSON 报告
   --help               显示帮助
@@ -32,6 +34,8 @@ export async function main(args = process.argv.slice(2)) {
         config: { type: "string", default: "patrol.config.json" },
         output: { type: "string" },
         source: { type: "string" },
+        'env-file': { type: 'string' },
+        'no-env': { type: 'boolean' },
         strict: { type: "boolean" },
         json: { type: "boolean" },
         help: { type: "boolean", short: "h" },
@@ -53,7 +57,7 @@ export async function main(args = process.argv.slice(2)) {
       throw new Error("check requires a source key or file");
     if (command !== "reproduce" && target && values.source)
       throw new Error("Specify the source only once");
-    config = await readConfig(values.config);
+    config = await readConfig(values.config, { envFile: values['no-env'] ? false : values['env-file'] });
     let source = target ?? values.source;
     if (command === "reproduce") {
       if (!target) throw new Error("reproduce requires report.json");
