@@ -6,16 +6,15 @@
 
 建议 Node.js 22 LTS；运行时包含 SQLite 和图片处理原生依赖，安装与执行应使用同一个 Node 版本。
 
-当前使用本地依赖，目录结构如下：
+运行时通过 npm 正式发布版安装，无需单独检出或编译。漫画源配置仍从本地目录读取，默认目录结构如下：
 
 ```text
 Projects/
-├── venera-runtime/
 ├── venera-patrol-cli/
 └── Github/venera-configs/
 ```
 
-先在 `venera-runtime` 中执行 `npm ci && npm run build:node`，再在本项目执行：
+在本项目执行：
 
 ```bash
 npm ci --ignore-scripts
@@ -26,7 +25,7 @@ npm run patrol -- check copy_manga --config patrol.config.json
 npm run patrol -- check-all --config patrol.config.json
 ```
 
-`.npmrc` 中的 `install-links=true` 让 npm 把本地依赖打包安装到本项目，而非复用相邻项目的 node_modules。`--ignore-scripts` 避免本地包的 prepare 再次编译相邻运行时；之后只在本项目中构建 SQLite 原生依赖。需要运行时已有 `dist/`。修改运行时后需重新构建运行时并重新安装本项目的依赖。仓库已提供可同步的公开配置；请按需调整每源关键词、设置和损坏标记。未配置授权的能力会明确显示为未完整检查。
+`npm ci` 按锁文件安装 npm 依赖；`--ignore-scripts` 跳过安装脚本，之后通过 `npm rebuild better-sqlite3` 构建 SQLite 原生依赖。仓库已提供可同步的公开配置；请按需调整每源关键词、设置和损坏标记。未配置授权的能力会明确显示为未完整检查。
 
 也可以 `npm link` 安装 `venera-patrol` 命令。项目无构建步骤；公共 API 从 `src/index.js` 导出。
 
@@ -221,7 +220,7 @@ npm run check
 npm test
 ```
 
-测试使用真实 venera-runtime、独立进程和离线图片/接口夹具，不依赖漫画网站在线状态。覆盖能力枚举、凭据/设置、章节、分页、图片变换、脱敏、传输限制、故障分类和强制终止。CI 会检出固定版本的运行时依赖并运行测试。
+测试使用真实 venera-runtime、独立进程和离线图片/接口夹具，不依赖漫画网站在线状态。覆盖能力枚举、凭据/设置、章节、分页、图片变换、脱敏、传输限制、故障分类和强制终止。CI 会通过 npm 安装锁文件固定的正式运行时版本并运行测试。
 
 内置 `Daily patrol` 每天在 UTC 02:23（北京时间 10:23）运行，并支持手动全量或单源巡检。脱敏结果保存到 `patrol-results` 分支，随后部署 GitHub Pages。前端变更会触发 `Refresh Pages`，使用已保存历史重新部署。
 

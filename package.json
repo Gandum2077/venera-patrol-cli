@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "acorn": "^8.18.0",
-    "venera-runtime": "file:../venera-runtime"
+    "venera-runtime": "^0.1.0"
   },
   "allowScripts": {
     "better-sqlite3@12.11.1": true

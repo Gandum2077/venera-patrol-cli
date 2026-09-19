@@ -25,21 +25,12 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          repository: Gandum2077/venera-runtime
-          ref: cfc0e90e3b9b429836c2c059b7d59baca90f314a
-          path: venera-runtime
-          persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
           repository: venera-app/venera-configs
           path: Github/venera-configs
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Build runtime
-        run: npm ci && npm run build:node
-        working-directory: venera-runtime
       - name: Install patrol
         run: npm ci --ignore-scripts && npm rebuild better-sqlite3
         working-directory: venera-patrol-cli

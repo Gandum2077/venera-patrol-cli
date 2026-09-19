@@ -26,6 +26,7 @@ export async function inspectSource(job, send) {
   let settings = job.settings,
     source,
     runtime,
+    runtimeImages,
     globals,
     stage = "runtime.load";
   const completed = new Set(),
@@ -340,7 +341,7 @@ export async function inspectSource(job, send) {
           `${suffix}.decode`,
           async () => {
             try {
-              const image = await runtime.runtimeImages.decode(bytes);
+              const image = await runtimeImages.decode(bytes);
               assert(
                 image.width > 0 && image.height > 0,
                 "Invalid image dimensions",
@@ -413,6 +414,7 @@ export async function inspectSource(job, send) {
       async () => {
         const module = await import("venera-runtime");
         runtime = module.default;
+        ({ runtimeImages } = await import("venera-runtime/platform"));
         globals = runtime.createVeneraRuntime();
         // Capture logs without arbitrary raw payloads: source code may print generated tokens.
         globals.log = (level) =>
