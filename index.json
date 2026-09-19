@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-19T07:24:51.134Z",
+  "latestRunId": "8bea1103-845a-4216-8ea7-e9d5678c5ab1",
+  "retentionLimit": 90,
+  "runs": [
+    {
+      "runId": "8bea1103-845a-4216-8ea7-e9d5678c5ab1",
+      "startedAt": "2026-09-19T07:24:37.455Z",
+      "finishedAt": "2026-09-19T07:24:37.455Z",
+      "durationMs": 0,
+      "summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "partial": 0,
+        "skipped": 0,
+        "listed": 0
+      },
+      "error": {
+        "category": "run_error",
+        "message": "巡检配置加载或运行失败；请检查工作流配置和授权信息。"
+      },
+      "metadata": {
+        "trigger": "schedule",
+        "source": null,
+        "sourceCommit": "d8a71168a83a6797482a5be9c000989dabf21c08",
+        "cliCommit": "89d68e198827132d790b5117a06555530059defd",
+        "actionsUrl": "https://github.com/Gandum2077/venera-patrol-cli/actions/runs/35429234870"
+      }
+    }
+  ]
+}
