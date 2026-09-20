@@ -25,7 +25,8 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          repository: venera-app/venera-configs
+          repository: Gandum2077/venera-configs
+          ref: fix/copy-manga-key-conflict
           path: Github/venera-configs
           persist-credentials: false
       - uses: actions/setup-node@v4

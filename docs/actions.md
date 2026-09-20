@@ -65,7 +65,7 @@ Actions Secret `PATROL_AUTH` 是同一个 JSON：
 
 `Daily patrol` 默认每天 UTC 02:23（北京时间 10:23）运行，GitHub 调度可能有延迟。
 
-1. 检出本仓库和当前 `venera-app/venera-configs`。
+1. 检出本仓库和 `Gandum2077/venera-configs` 的 `fix/copy-manga-key-conflict` 分支，暂时使用修复源 ID 冲突的 fork。
 2. 使用 Node 22，按锁文件从 npm 安装 CLI 依赖（包含正式版 `venera-runtime`），并构建 SQLite 原生依赖；漫画源提交号写入报告。
 3. 注入 `PATROL_AUTH`，执行全量或单源巡检。该 job 不保存 checkout 的 Git 凭据。
 4. 将报告再次脱敏，清除本机路径，导出 `report.json`、`report.md`、失败源列表和引用的 JSONL trace。不会整体复制原始输出目录、数据库、`.env` 或响应正文。
