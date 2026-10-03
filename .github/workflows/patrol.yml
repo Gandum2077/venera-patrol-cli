@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: Gandum2077/venera-configs
-          ref: fix/copy-manga-key-conflict
+          ref: ai
           path: Github/venera-configs
           persist-credentials: false
       - uses: actions/setup-node@v4
