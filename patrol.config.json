@@ -11,7 +11,7 @@
     "retries": 1,
     "pages": 2,
     "imageSamples": 2,
-    "maxRequests": 200,
+    "maxRequests": 400,
     "maxResponseBytes": 20971520,
     "maxTraceEvents": 2000
   },

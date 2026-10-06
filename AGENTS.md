@@ -8,8 +8,8 @@ venera 是一个可以使用自定义配置的漫画阅读工具。venera-config
 
 venera本地位置: /Users/agni/Projects/Github/venera
 
-venera-configs本地位置: /Users/agni/Projects/Github/venera-configs
-
+venera-configs本地位置: /Users/agni/Projects/venera-configs  
+使用 `ai` 分支
 
 ### venera-runtime
 
