@@ -5,6 +5,7 @@ import { readConfig } from "../src/config.js";
 import { runPatrol } from "../src/runner.js";
 import { exportPublicRun } from "../src/archive.js";
 import { finishReport } from "../src/report.js";
+import { applyCiPolicy } from "./ci-policy.js";
 
 let config,
   reportFile,
@@ -17,6 +18,7 @@ try {
   config = await readConfig(process.env.PATROL_CONFIG ?? "patrol.config.json", {
     envFile: false,
   });
+  config = applyCiPolicy(config);
   const result = await runPatrol(config, {
     source: process.env.PATROL_SOURCE || undefined,
     output,

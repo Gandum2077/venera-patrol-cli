@@ -224,6 +224,8 @@ npm test
 
 内置 `Daily patrol` 每天在 UTC 02:23（北京时间 10:23）运行，并支持手动全量或单源巡检。脱敏结果保存到 `patrol-results` 分支，随后部署 GitHub Pages。前端变更会触发 `Refresh Pages`，使用已保存历史重新部署。
 
+GitHub 巡检跳过需要本地或自建部署的 `lanraragi`、`komga` 和 `kavita`，报告保留 `skipped` 状态及原因。手动单源运行也遵循此规则；本地 CLI 不受影响，配置服务地址和授权后仍可检查这些源。
+
 完整设置步骤、Secrets 格式、历史保留规则和本地预览见 [GitHub Actions 与 Pages](docs/actions.md)。本项目不会自动发消息、启动修复 Agent 或创建 PR。
 
 ```bash

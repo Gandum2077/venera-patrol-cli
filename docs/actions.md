@@ -7,6 +7,7 @@
 3. 在 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。
 4. 确认仓库/组织允许工作流使用 `contents: write` 并推送 `patrol-results` 分支；如果分支规则禁止机器人推送，需要为结果分支配置允许的规则。
 5. 在 **Actions → Daily patrol → Run workflow** 首次运行。`source` 留空巡检全部源，也可填 `copy_manga` 等索引 key。
+   需要本地或自建部署的 `lanraragi`、`komga`、`kavita` 自动跳过（包括手动单源运行），并在报告中说明原因。本地 CLI 仍可巡检这些源。
 6. 结果写入 `patrol-results` 分支，Pages 地址显示在 `publish` job 的 `github-pages` environment 链接中。也可以先手动运行 **Refresh Pages** 部署无记录的初始页面。
 
 部署使用官方 Pages artifact 流程和 `pages: write` / `id-token: write` 权限。[GitHub 官方文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
