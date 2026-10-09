@@ -38,6 +38,7 @@ export const roots = [
 export function enumerate(source) {
   const result = [];
   function visit(value, path, ancestors = new Set()) {
+    if (isDisabledRanking(source, path)) return;
     if (value == null) return;
     if (typeof value === "function" && !isImplementedFunction(value)) return;
     const type =
@@ -59,13 +60,21 @@ export function enumerate(source) {
   for (const root of roots) visit(source[root], root);
   return result;
 }
+function isDisabledRanking(source, path) {
+  return (
+    source.category?.enableRankingPage === false &&
+    (path === "categoryComics.ranking" ||
+      path.startsWith("categoryComics.ranking.") ||
+      path.startsWith("categoryComics.ranking["))
+  );
+}
 export function resolveCapability(source, path) {
   const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".");
   if (parts.some((p) => ["__proto__", "prototype", "constructor"].includes(p)))
     throw new Error("Invalid capability path");
   const key = parts.pop();
   const owner = parts.reduce((v, k) => v?.[k], source);
-  const value = owner?.[key];
+  const value = isDisabledRanking(source, path) ? undefined : owner?.[key];
   return {
     owner,
     value:

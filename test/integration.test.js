@@ -81,6 +81,30 @@ async function setup(t, { code, sources = {}, limits = {} } = {}) {
   );
   return readConfig(file);
 }
+test("disabled ranking produces no capabilities or stages", async (t) => {
+  const config = await setup(t, {
+    code: `class C extends ComicSource {
+      name='C';key='fixture';version='1.0.0';
+      category={enableRankingPage:false,parts:[]};
+      categoryComics={
+        load:async()=>({comics:[{id:'1',title:'T',cover:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAC0lEQVQImWNgQAcAABIAAW/6Y7cAAAAASUVORK5CYII='}],maxPage:1}),
+        ranking:{options:['week'],
+          load:async()=>{throw Error('disabled ranking executed')},
+          loadWithNext:async()=>{throw Error('disabled ranking executed')}
+        }
+      };
+    }`,
+    sources: { fixture: {
+      inputs: { category: "Action" },
+    } },
+  });
+  const { report } = await runPatrol(config);
+  const source = report.sources[0];
+  assert.equal(report.summary.failed, 0, JSON.stringify(source.stages));
+  assert.ok(!source.capabilities.some(c => c.path.startsWith("categoryComics.ranking")));
+  assert.ok(!source.stages.some(s => s.path.startsWith("categoryComics.ranking")));
+  assert.ok(source.stages.some(s => s.path === "categoryComics.load" && s.status === "passed"));
+});
 test("real runtime executes authenticated chain, all page forms, hooks and image decoding", async (t) => {
   const config = await setup(t, {
     sources: {

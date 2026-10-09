@@ -93,6 +93,26 @@ test("inventory includes nested functions and declarative leaves, preserves this
   );
   assert.deepEqual(value.call(owner), ["x"]);
 });
+test("disabled ranking is excluded while enabled and unspecified ranking remain available", () => {
+  for (const enabled of [false, true, undefined]) {
+    const source = {
+      category: { enableRankingPage: enabled },
+      categoryComics: {
+        load() { return []; },
+        ranking: {
+          options: ["week"],
+          load() { return []; },
+          loadWithNext() { return []; },
+        },
+      },
+    };
+    const inventory = enumerate(source);
+    assert.equal(inventory.some(c => c.path.startsWith("categoryComics.ranking")), enabled !== false);
+    for (const path of ["categoryComics.ranking", "categoryComics.ranking.options[0]", "categoryComics.ranking.load", "categoryComics.ranking.loadWithNext"])
+      assert.equal(resolveCapability(source, path).value !== undefined, enabled !== false);
+    assert.equal(typeof resolveCapability(source, "categoryComics.load").value, "function");
+  }
+});
 test("redaction covers known secrets in arbitrary errors, headers, URLs and cycles", () => {
   const r = createRedactor({
     credentials: { password: "private+pass" },
