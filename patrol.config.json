@@ -128,8 +128,9 @@
       }
     },
     "ccc": {
+      "auth": "ccc",
       "inputs": {
-        "keyword": "love"
+        "keyword": "女友"
       }
     },
     "goda": {

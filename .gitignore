@@ -12,3 +12,5 @@ playwright-report/
 test-results/
 .source-commit
 .DS_Store
+
+.patrol-state/

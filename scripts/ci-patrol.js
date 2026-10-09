@@ -5,6 +5,7 @@ import { readConfig } from "../src/config.js";
 import { runPatrol } from "../src/runner.js";
 import { exportPublicRun } from "../src/archive.js";
 import { finishReport } from "../src/report.js";
+import { writeGithubAuthState } from "./auth-state-sync.js";
 import { applyCiPolicy } from "./ci-policy.js";
 
 let config,
@@ -19,14 +20,19 @@ try {
     envFile: false,
   });
   config = applyCiPolicy(config);
+  if (process.env.GITHUB_ACTIONS === "true" && process.env.PATROL_AUTH?.trim() && !process.env.PATROL_AUTH_WRITE_TOKEN)
+    throw new Error("PATROL_AUTH_WRITE_TOKEN is required to preserve refreshed sessions");
   const result = await runPatrol(config, {
     source: process.env.PATROL_SOURCE || undefined,
     output,
+    onAuthStateChange: process.env.PATROL_AUTH_WRITE_TOKEN ? writeGithubAuthState : undefined,
   });
   reportFile = result.reportFile;
   failed = result.report.summary.failed > 0;
 } catch (error) {
   failed = true;
+  if (process.env.GITHUB_ACTIONS === "true" && !process.env.PATROL_AUTH_WRITE_TOKEN)
+    console.error("Configure PATROL_AUTH_WRITE_TOKEN with repository Secrets write permission before authenticated patrol.");
   const report = finishReport({
     schemaVersion: 1,
     runId: randomUUID(),

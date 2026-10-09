@@ -233,3 +233,21 @@ GitHub 巡检跳过需要本地或自建部署的 `lanraragi`、`komga` 和 `kav
 npx playwright install chromium
 npm run test:ui
 ```
+
+### 自动保存认证状态
+
+本地和 GitHub Actions 使用相同规则：`PATROL_AUTH` 保存初始凭据，`PATROL_AUTH_STATE` 保存源更新后的会话。状态按 `auth` 名称关联，包含认证配置指纹和源数据；指纹匹配时，状态覆盖初始数据并在 init 前恢复。修改 `PATROL_AUTH` 中对应条目的 `credentials` 或 `data` 会自动使该源的旧状态失效，其他源不受影响。
+
+本地无需额外配置。通过 `saveData` / `deleteData` 更新的数据立即写入配置文件同目录的 `.patrol-state/`；下次巡检自动恢复。`.patrol-state/PATROL_AUTH_STATE.json` 是同格式的汇总文件，可作为环境变量或 GitHub Secret `PATROL_AUTH_STATE` 的值导入。目录权限为 0700，文件权限为 0600，已忽略 Git 提交，不能上传到公开报告或 artifact。环境变量提供初始状态，本地已有的状态文件优先。重置本地状态可删除 `.patrol-state/`，并清除手动设置的 `PATROL_AUTH_STATE`。
+
+GitHub Actions 的一次性设置：
+
+1. 保留现有仓库 Secret `PATROL_AUTH`。
+2. 新增 `PATROL_AUTH_WRITE_TOKEN`：使用仅授权此仓库、具有 **Secrets: Read and write** 权限的 fine-grained PAT。普通 `GITHUB_TOKEN` 不具备此项权限。
+3. `PATROL_AUTH_STATE` 可以先留空，工作流会自动创建和更新；也可粘贴本地汇总文件的 JSON 来导入有效会话。
+
+Actions 在每个巡检步骤结束时等待状态回写完成，再继续执行；后续功能失败不会丢弃已刷新状态。回写由父进程使用 `gh secret set` 完成，内容通过 stdin 传入，写入令牌不传给源 worker。启动时会先验证回写可用，失败时停止巡检并明确记录 `auth_state_sync_failed`。仓库 Secret 支持更新 API 和对应的 Secrets 写权限，参见 [GitHub 文档](https://docs.github.com/en/rest/actions/secrets)；stdin 上传方式参见 [GitHub CLI 文档](https://cli.github.com/manual/gh_secret_set)。本地运行不需要这个写入令牌。
+
+同一源并发运行会报告 `auth_state_locked`，Actions 使用共享 concurrency 组且不取消正在运行的巡检。正常退出和 worker 超时会释放本地锁；整个 CLI 被强制终止后，确认没有巡检运行再删除遗留的 `.lock` 目录。本地和 Actions 的存储独立，建议分别登录使用独立会话；统一格式不会让两边自动共享最新状态。
+
+已经失效的 refresh token 仍需重新登录导出。服务器完成 token 轮换与 GitHub Secret 回写之间无法构成原子事务；runner 在这段时间被强制终止、断网或写入失败，仍可能需要重新登录。Secret 的 48 KB 大小限制也适用于汇总状态，超限会报错。

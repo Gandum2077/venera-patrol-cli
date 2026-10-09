@@ -25,6 +25,9 @@ test("scheduled patrol saves failed reports and deploys without exposing auth to
     check = steps.find((s) => s.id === "check");
   assert.equal(check["continue-on-error"], true);
   assert.equal(check.env.PATROL_AUTH, "${{ secrets.PATROL_AUTH }}");
+  assert.equal(check.env.PATROL_AUTH_STATE, "${{ secrets.PATROL_AUTH_STATE }}");
+  assert.equal(check.env.PATROL_AUTH_WRITE_TOKEN, "${{ secrets.PATROL_AUTH_WRITE_TOKEN }}");
+  assert.equal(w.concurrency["cancel-in-progress"], false);
   const upload = steps.find((s) =>
     s.uses?.startsWith("actions/upload-artifact"),
   );

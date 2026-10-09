@@ -395,3 +395,66 @@ test("batch continues after malformed source and CLI reports exit codes and vali
   ]);
   assert.equal(JSON.parse(stdout).summary.listed, 1);
 });
+
+test("refreshed authentication survives isolated runs and changed credentials reset it", async (t) => {
+  const config = await setup(t, {
+    code: `class C extends ComicSource {
+      name='C';key='fixture';version='1.0.0';
+      init(){this.saveData('generation',(this.loadData('generation')??0)+1);this.saveData('refreshToken','rotated-'+this.loadData('generation'));}
+      account={verify:()=>({generation:this.loadData('generation'),refreshToken:this.loadData('refreshToken'),logged:this.isLogged})};
+    }`,
+    sources: { fixture: { data: { account: "ok", refreshToken: "original" }, cases: { "account.verify": { args: [], expect: { equals: { generation: 1, refreshToken: "rotated-1", logged: true } } } } } },
+  });
+  let result = await runPatrol(config);
+  assert.equal(result.report.summary.failed, 0);
+  config.sources.fixture.cases["account.verify"].expect.equals.generation = 2;
+  config.sources.fixture.cases["account.verify"].expect.equals.refreshToken = "rotated-2";
+  result = await runPatrol(config);
+  assert.equal(result.report.summary.failed, 0);
+  const auth = JSON.parse((await readFile(path.join(path.dirname(config.filename), ".env"), "utf8")).slice("PATROL_AUTH=".length));
+  process.env.PATROL_AUTH = JSON.stringify({ fixture: { ...auth.fixture, data: { account: "ok", refreshToken: "new-session" } } });
+  config.sources.fixture.cases["account.verify"].expect.equals.generation = 1;
+  config.sources.fixture.cases["account.verify"].expect.equals.refreshToken = "rotated-1";
+  result = await runPatrol(config);
+  assert.equal(result.report.summary.failed, 0);
+  assert.ok(!(await readFile(result.reportFile, "utf8")).includes("rotated-1"));
+});
+
+test("PATROL_AUTH_STATE restores rotated sessions on a fresh runner and syncs before later failures", async (t) => {
+  const previous = process.env.PATROL_AUTH_STATE;
+  delete process.env.PATROL_AUTH_STATE;
+  t.after(() => { if (previous === undefined) delete process.env.PATROL_AUTH_STATE; else process.env.PATROL_AUTH_STATE = previous; });
+  const code = `class C extends ComicSource {
+    name='C';key='fixture';version='1.0.0';
+    init(){const n=(this.loadData('generation')??0)+1;this.saveData('generation',n);this.saveData('refreshToken','rotated-'+n);}
+    account={verify:()=>this.loadData('generation'),fail:()=>{throw Error(this.loadData('refreshToken'))}};
+  }`;
+  const sources = { fixture: { data: { account: "ok", refreshToken: "initial" }, cases: { "account.verify": { args: [], expect: { equals: 1 } }, "account.fail": { args: [] } } } };
+  let config = await setup(t, { code, sources });
+  const updates = [];
+  const sync = async (state) => { updates.push(structuredClone(state)); };
+  let result = await runPatrol(config, { onAuthStateChange: sync });
+  assert.ok(result.report.summary.failed > 0);
+  assert.equal(updates.at(-1).sources.fixture.data.refreshToken, "rotated-1");
+  assert.ok(!(await readFile(result.reportFile, "utf8")).includes("rotated-1"));
+  const stateFile = path.join(path.dirname(config.filename), ".patrol-state", "PATROL_AUTH_STATE.json");
+  assert.deepEqual(JSON.parse(await readFile(stateFile)), updates.at(-1));
+  process.env.PATROL_AUTH_STATE = JSON.stringify({ ...updates.at(-1), sources: { ...updates.at(-1).sources, unselected: { fingerprint: "other", data: { refreshToken: "keep" } } } });
+  sources.fixture.cases["account.verify"].expect.equals = 2;
+  config = await setup(t, { code, sources });
+  result = await runPatrol(config, { onAuthStateChange: sync });
+  assert.equal(result.report.sources[0].stages.find(s => s.path === "account.verify").status, "passed");
+  assert.equal(updates.at(-1).sources.fixture.data.refreshToken, "rotated-2");
+  assert.equal(updates.at(-1).sources.unselected.data.refreshToken, "keep");
+});
+
+test("failed remote authentication state sync prevents refreshing a session", async (t) => {
+  const config = await setup(t, {
+    code: `class C extends ComicSource {name='C';key='fixture';version='1.0.0';init(){throw Error('must not reach refresh')}}`,
+    sources: { fixture: { data: { account: "ok" } } },
+  });
+  const { report } = await runPatrol(config, { onAuthStateChange: async () => { throw Error("private writer failure"); } });
+  assert.ok(report.summary.failed > 0);
+  assert.ok(!report.sources[0].stages.some(s => s.path === "init"));
+  assert.ok(report.sources[0].stages.some(s => s.category === "auth_state_sync_failed"));
+});

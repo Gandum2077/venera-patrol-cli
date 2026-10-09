@@ -1,3 +1,4 @@
+import { persistSourceData } from "./auth-state.js";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import {
@@ -63,6 +64,7 @@ export async function inspectSource(job, send) {
       const reason = brokenReason(settings, path);
       if (reason) skip("manual_broken", reason);
       const value = await action();
+      if (job.checkpoint) await job.checkpoint();
       if (validate) validateResult(path, value, expect);
       result = {
         id,
@@ -76,6 +78,9 @@ export async function inspectSource(job, send) {
       send({ kind: "stage.result", result });
       return value;
     } catch (error) {
+      if (job.checkpoint && error.category !== "auth_state_sync_failed") {
+        try { await job.checkpoint(); } catch (syncError) { error = syncError; }
+      }
       result = {
         id,
         path,
@@ -89,6 +94,7 @@ export async function inspectSource(job, send) {
       };
       results.push(result);
       send({ kind: "stage.result", result });
+      if (error.category === "auth_state_sync_failed") throw error;
       return undefined;
     }
   }
@@ -548,6 +554,9 @@ export async function inspectSource(job, send) {
           source.saveData(c.browserToken.dataKey, c.browserToken.value);
         for (const cookie of c.cookies ?? [])
           globals.Network.setCookies(cookie.url, cookie.values);
+        if (job.authStateFile && !settings.authMissing &&
+            (settings.auth || Object.keys(settings.credentials ?? {}).length || Object.keys(settings.data ?? {}).length))
+          persistSourceData(source, settings, job.authStateFile, job.registerPrivateData);
         return true;
       },
       { validate: false },

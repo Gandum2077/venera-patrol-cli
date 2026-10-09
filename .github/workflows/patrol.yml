@@ -45,6 +45,8 @@ jobs:
         working-directory: venera-patrol-cli
         env:
           PATROL_AUTH: ${{ secrets.PATROL_AUTH }}
+          PATROL_AUTH_STATE: ${{ secrets.PATROL_AUTH_STATE }}
+          PATROL_AUTH_WRITE_TOKEN: ${{ secrets.PATROL_AUTH_WRITE_TOKEN }}
           PATROL_SOURCE: ${{ inputs.source }}
       - name: Upload public reports even when sources failed
         if: always() && !cancelled()

@@ -1,5 +1,6 @@
+import { collectAuthState, readAuthState } from "./auth-state.js";
 import { fork } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdtemp, mkdir, rm, writeFile, rename } from "node:fs/promises";
 import { appendFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -53,6 +54,20 @@ async function runSource(descriptor, config, options) {
       durationMs: 0,
     });
     return summarizeSource(source);
+  }
+  const stateDir = path.join(path.dirname(config.filename ?? config.output), ".patrol-state");
+  let authStateFile, stateLock;
+  if (options.mode !== "list") {
+    await mkdir(stateDir, { recursive: true, mode: 0o700 });
+    authStateFile = path.join(stateDir, createHash("sha256").update(settings.auth ?? descriptor.key).digest("hex") + ".json");
+    stateLock = authStateFile + ".lock";
+    try {
+      await mkdir(stateLock, { mode: 0o700 });
+    } catch (error) {
+      if (error.code !== "EEXIST") throw error;
+      source.stages.push({ path: "authentication.state", status: "failed", category: "auth_state_locked", reason: "Another patrol holds the private authentication state lock", durationMs: 0 });
+      return summarizeSource(source);
+    }
   }
   const redact = createRedactor(settings);
   const dataDir = await mkdtemp(path.join(tmpdir(), "venera-patrol-"));
@@ -113,7 +128,7 @@ async function runSource(descriptor, config, options) {
       child = fork(workerFile, [], {
         cwd: path.dirname(descriptor.file),
         env: {
-          ...process.env,
+          ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !["PATROL_AUTH_WRITE_TOKEN", "GH_TOKEN", "GITHUB_TOKEN"].includes(key))),
           VENERA_RUNTIME_DATA_DIR: dataDir,
         },
         execArgv: ["--max-old-space-size=512"],
@@ -149,7 +164,12 @@ async function runSource(descriptor, config, options) {
       options.signal?.addEventListener("abort", abort, { once: true });
       child.on("message", (message) => {
         if (fatal) return;
-        if (message.kind === "stage.start") {
+        if (message.kind === "auth.checkpoint") {
+          options.checkpoint(stateDir).then(
+            () => { if (child.connected) child.send({ kind: "auth.saved", id: message.id }); },
+            () => { if (child.connected) child.send({ kind: "auth.saved", id: message.id, failed: true }); },
+          );
+        } else if (message.kind === "stage.start") {
           active = message;
           arm();
           trace(message);
@@ -194,6 +214,8 @@ async function runSource(descriptor, config, options) {
       });
       child.send({
         descriptor,
+        authStateFile,
+        authStateSync: options.mode !== "list" && Boolean(options.onAuthStateChange),
         policy: config.defaults,
         settings,
         sourceSettings: config.sources,
@@ -206,6 +228,11 @@ async function runSource(descriptor, config, options) {
     clearTimeout(sourceTimer);
     options.signal?.removeEventListener("abort", abort);
     await rm(dataDir, { force: true, recursive: true });
+    if (authStateFile) {
+      try { await options.checkpoint(stateDir); }
+      catch { source.stages.push({ path: "authentication.state", status: "failed", category: "auth_state_sync_failed", reason: "Could not persist PATROL_AUTH_STATE", durationMs: 0 }); }
+    }
+    if (stateLock) await rm(stateLock, { force: true, recursive: true });
   }
   if (fatal && options.mode !== "list") {
     const paths = new Set(source.stages.map((x) => x.path));
@@ -225,6 +252,21 @@ async function runSource(descriptor, config, options) {
 }
 
 export async function runPatrol(config, options = {}) {
+  const initialState = options.mode === "list" ? undefined : readAuthState();
+  let stateQueue = Promise.resolve();
+  let lastState;
+  const checkpoint = (directory) => {
+    const operation = stateQueue.then(async () => {
+      const state = collectAuthState(directory, initialState);
+      const serialized = JSON.stringify(state);
+      if (serialized === lastState) return;
+      if (options.onAuthStateChange) await options.onAuthStateChange(state);
+      await writeAtomic(path.join(directory, "PATROL_AUTH_STATE.json"), serialized);
+      lastState = serialized;
+    });
+    stateQueue = operation.catch(() => {});
+    return operation;
+  };
   let descriptors = await discoverSources(config);
   if (options.source) {
     const target = path.resolve(options.source);
@@ -278,6 +320,7 @@ export async function runPatrol(config, options = {}) {
           } else
             outputs[index] = await runSource(descriptors[index], config, {
               ...options,
+              checkpoint,
               mode: report.mode,
               runId,
               runDir,
