@@ -36,6 +36,32 @@ test("null image hooks use defaults and unsupported thumbnail callbacks are not 
 const fixture = fileURLToPath(
   new URL("./fixtures/healthy.js", import.meta.url),
 );
+test("thumbnail crop metadata is removed before hooks and downloads", async (t) => {
+  const png =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAC0lEQVQImWNgQAcAABIAAW/6Y7cAAAAASUVORK5CYII=";
+  for (const crop of ["@x=0-1&y=0-1", "@y=0.25-0.75", "@x=0-0.5"]) {
+    const config = await setup(t, {
+      code: `class C extends ComicSource {
+        name='C';key='fixture';version='1.0.0';
+        comic={
+          loadInfo:async()=>({title:'T',cover:${JSON.stringify(png)}}),
+          loadThumbnails:async()=>({thumbnails:[${JSON.stringify(png + crop)}],next:null}),
+          onThumbnailLoad:(url)=>{
+            if(url!==${JSON.stringify(png)}) throw Error('Crop metadata reached hook');
+            return null;
+          }
+        };
+      }`,
+      sources: { fixture: { inputs: { comicId: "1" } } },
+    });
+    const { report } = await runPatrol(config);
+    const stages = report.sources[0].stages;
+    assert.equal(report.summary.failed, 0, JSON.stringify(stages));
+    for (const stage of ["comic.loadThumbnails", "comic.onThumbnailLoad", "thumbnail.download", "thumbnail.decode"])
+      assert.ok(stages.some(s => s.path === stage && s.status === "passed"), stage);
+  }
+});
+
 async function setup(t, { code, sources = {}, limits = {} } = {}) {
   // Fixture credentials live in an env file just like user installations.
   sources = structuredClone(sources);

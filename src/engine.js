@@ -879,7 +879,12 @@ export async function inspectSource(job, send) {
         "image",
       );
     }
-    const cover = context.thumbnails?.[0] ?? context.cover;
+    // Crop coordinates are display metadata, not part of the thumbnail request
+    // or the URL passed to onThumbnailLoad.
+    const cover = (context.thumbnails?.[0] ?? context.cover)?.replace(
+      /@[xy]=.*$/,
+      "",
+    );
     if (cover)
       await imageCheck(cover, "comic.onThumbnailLoad", [cover], "thumbnail");
     // Extension capabilities are never silently discarded. Explicit cases make them executable.
