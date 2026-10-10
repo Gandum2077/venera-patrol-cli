@@ -89,7 +89,7 @@ export function validateResult(path, result, expectation = {}) {
   )
     comicList(result, { allowEmpty: path.startsWith("favorites.") });
   else if (/^explore\[\d+\]\.(load|loadNext)$/.test(path))
-    comicList(result, { explore: true });
+    comicList(result, { explore: true, allowEmpty: expectation.nonEmpty === false });
   else if (path === "comic.loadInfo") {
     assert(
       result &&

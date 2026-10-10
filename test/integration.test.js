@@ -508,3 +508,19 @@ test("failed remote authentication state sync prevents refreshing a session", as
   assert.ok(!report.sources[0].stages.some(s => s.path === "init"));
   assert.ok(report.sources[0].stages.some(s => s.category === "auth_state_sync_failed"));
 });
+
+test("explore empty lists require an explicit expectation and retain shape validation", async (t) => {
+  for (const [explicit, result, expected] of [
+    [false, '{comics:[],next:null}', 'failed'],
+    [true, '{comics:[],next:null}', 'passed'],
+    [true, '{comics:[{id:"1",title:"T"}],next:null}', 'failed'],
+    [true, '{next:null}', 'failed'],
+  ]) {
+    const config = await setup(t, {
+      code: `class C extends ComicSource { name='C';key='fixture';version='1.0.0';explore=[{title:'watched',type:'multiPageComicList',loadNext:async()=>(${result})}] }`,
+      sources: {fixture: explicit ? {cases:{'explore[0].loadNext':{args:[null],expect:{nonEmpty:false}}}} : {}},
+    });
+    const {report} = await runPatrol(config);
+    assert.equal(report.sources[0].stages.find(s=>s.path==='explore[0].loadNext').status, expected);
+  }
+});

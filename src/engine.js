@@ -181,7 +181,7 @@ export async function inspectSource(job, send) {
       (value) => {
         const comics = comicList(value, {
           explore,
-          allowEmpty: path.startsWith("favorites."),
+          allowEmpty: path.startsWith("favorites.") || custom?.expect?.nonEmpty === false,
         });
         select(comics);
         first = value;

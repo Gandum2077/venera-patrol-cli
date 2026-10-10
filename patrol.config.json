@@ -33,9 +33,20 @@
     },
     "ehentai": {
       "inputs": {
-        "keyword": "language:chinese"
+        "keyword": "language:chinese",
+        "archiveId": "1"
       },
-      "auth": "ehentai"
+      "auth": "ehentai",
+      "cases": {
+        "explore[2].loadNext": {
+          "args": [null],
+          "expect": {
+            "type": "object",
+            "requiredKeys": ["comics"],
+            "nonEmpty": false
+          }
+        }
+      }
     },
     "Komiic": {
       "inputs": {
