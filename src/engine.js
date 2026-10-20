@@ -11,6 +11,7 @@ import {
 import { brokenReason } from "./config.js";
 import { PatrolError, Skip, assert, classify } from "./errors.js";
 import { installObserver, httpCategory } from "./observer.js";
+import { installRuntimeCompatibility } from "./runtime-compat.js";
 import {
   validateResult,
   comicList,
@@ -98,7 +99,13 @@ export async function inspectSource(job, send) {
       return undefined;
     }
   }
-  async function call(path, getArgs = () => [], after, validate = true) {
+  async function call(
+    path,
+    getArgs = () => [],
+    after,
+    validate = true,
+    { repeat = false } = {},
+  ) {
     const { owner, value } = resolveCapability(source, path);
     if (typeof value !== "function") return;
     const test = settings.cases?.[path];
@@ -117,7 +124,7 @@ export async function inspectSource(job, send) {
         if (after) await after(out, args);
         return out;
       },
-      { validate: false },
+      { validate: false, repeat },
     );
     return result;
   }
@@ -422,6 +429,7 @@ export async function inspectSource(job, send) {
         runtime = module.default;
         ({ runtimeImages } = await import("venera-runtime/platform"));
         globals = runtime.createVeneraRuntime();
+        installRuntimeCompatibility(globals, observer);
         // Capture logs without arbitrary raw payloads: source code may print generated tokens.
         globals.log = (level) =>
           emit({
@@ -611,7 +619,7 @@ export async function inspectSource(job, send) {
           );
         return [credentials.username, credentials.password];
       },
-      (_, args) => source.saveData("account", args),
+      (_, args) => source.saveData("account", source.account.storeCredentials === false ? "ok" : args),
     );
     await call(
       "account.loginWithCookies.validate",
@@ -842,9 +850,16 @@ export async function inspectSource(job, send) {
       if (!tag) missing("Provide inputs.tag or details tags");
       return [tag[0], tag[1][0]];
     };
-    await call("comic.onClickTag", tagArgs, (v) =>
-      assert(v != null, "Tag has no jump target"),
-    );
+    // A namespace may intentionally have no navigation target. Sample each
+    // namespace so a no-op does not hide failures in clickable tags.
+    const tagSamples =
+      input().tag || settings.cases?.["comic.onClickTag"]
+        ? []
+        : entries(context.details?.tags)
+            .filter(([, values]) => Array.isArray(values) && values.length)
+            .map(([namespace, values]) => () => [namespace, values[0]]);
+    for (const args of tagSamples.length ? tagSamples : [tagArgs])
+      await call("comic.onClickTag", args, undefined, true, { repeat: true });
     await call("search.onTagSuggestionSelected", tagArgs, (v) =>
       assert(
         typeof v === "string" && v.length,

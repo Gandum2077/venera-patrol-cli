@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { setTimeout as delay } from "node:timers/promises";
 import { PatrolError, classify } from "./errors.js";
 
@@ -19,6 +20,7 @@ export function installObserver(policy, emit, getStage) {
   let requests = 0,
     nextStart = 0;
   const evidence = new Map();
+  const transportOptions = new AsyncLocalStorage();
   globalThis.fetch = async (input, init = {}) => {
     const url =
       typeof input === "string"
@@ -27,6 +29,21 @@ export function installObserver(policy, emit, getStage) {
           ? input.href
           : input.url;
     const method = (init.method ?? input?.method ?? "GET").toUpperCase();
+    const options = transportOptions.getStore() ?? {};
+    const masked = options.maskDataInLog === true || options.maskResponseInLog === true || options.maskQueryInLog === true;
+    const traceUrl = (value) => {
+      if (!value || options.maskQueryInLog !== true) return value;
+      try {
+        const parsed = new URL(value);
+        parsed.username = "";
+        parsed.password = "";
+        parsed.search = parsed.search ? "?[REDACTED]" : "";
+        parsed.hash = "";
+        return parsed.href;
+      } catch {
+        return "[URL MASKED]";
+      }
+    };
     const stage = getStage();
     const headers = Object.fromEntries(
       [...new Headers(init.headers ?? input?.headers).entries()].map(
@@ -66,13 +83,17 @@ export function installObserver(policy, emit, getStage) {
         stage,
         requestId,
         method,
-        url,
+        url: traceUrl(url),
         headers,
         attempt: attempt + 1,
       });
       let retryAfter = 0;
       try {
-        const response = await nativeFetch(input, { ...init, signal });
+        const response = await nativeFetch(input, {
+          ...init,
+          ...(options.followRedirects === false ? { redirect: "manual" } : {}),
+          signal,
+        });
         const declared = Number(response.headers.get("content-length"));
         if (declared > policy.maxResponseBytes) {
           await response.body?.cancel();
@@ -111,12 +132,12 @@ export function installObserver(policy, emit, getStage) {
           stage,
           requestId,
           method,
-          url,
-          finalUrl: response.url,
+          url: traceUrl(url),
+          finalUrl: traceUrl(response.url),
           status: response.status,
           contentType: response.headers.get("content-type"),
           responseBytes: bytes,
-          bodySha256: createHash("sha256").update(body).digest("hex"),
+          bodySha256: options.maskResponseInLog === true ? "[REDACTED]" : createHash("sha256").update(body).digest("hex"),
           durationMs: Date.now() - started,
           category,
           attempt: attempt + 1,
@@ -163,10 +184,10 @@ export function installObserver(policy, emit, getStage) {
           stage,
           requestId,
           method,
-          url,
+          url: traceUrl(url),
           durationMs: Date.now() - started,
           category,
-          error: String(error?.message ?? error),
+          error: masked ? "HTTP request failed (details masked)" : String(error?.message ?? error),
           attempt: attempt + 1,
         });
         if (
@@ -186,8 +207,12 @@ export function installObserver(policy, emit, getStage) {
   };
   return {
     evidence,
+    withNetworkOptions(options, action) {
+      return transportOptions.run(options ?? {}, action);
+    },
     restore() {
       globalThis.fetch = nativeFetch;
+      transportOptions.disable();
     },
   };
 }

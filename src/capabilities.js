@@ -84,7 +84,7 @@ export function resolveCapability(source, path) {
   };
 }
 export function isMutation(path) {
-  return /^(favorites\.(add|delete)|comic\.(send|vote|like|star)|account\.logout)|\.callback$|\.onTap$/.test(
+  return path === "account.onLoginCancel" || /^(favorites\.(add|delete)|comic\.(send|vote|like|star)|account\.logout)|\.callback$|\.onTap$/.test(
     path,
   );
 }

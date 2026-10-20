@@ -16,6 +16,10 @@
     "maxTraceEvents": 2000
   },
   "sources": {
+    "baozi": { "inputs": { "keyword": "love" } },
+    "ccc": { "auth": "ccc", "inputs": { "keyword": "女友" } },
+    "comic_walker": { "inputs": { "keyword": "love" } },
+    "comick": { "inputs": { "keyword": "love" } },
     "copy_manga": {
       "inputs": {
         "keyword": "火影",
@@ -25,17 +29,8 @@
       "settings": {},
       "brokenCapabilities": {}
     },
-    "picacg": {
-      "inputs": {
-        "keyword": "漫画"
-      },
-      "auth": "picacg"
-    },
     "ehentai": {
-      "inputs": {
-        "keyword": "language:chinese",
-        "archiveId": "1"
-      },
+      "inputs": { "keyword": "language:chinese", "archiveId": "1" },
       "auth": "ehentai",
       "cases": {
         "explore[2].loadNext": {
@@ -48,146 +43,30 @@
         }
       }
     },
-    "Komiic": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "baozi": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "nhentai": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "wnacg": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "jm": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "manga_dex": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "ikmmh": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "shonen_jump_plus": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "hitomi": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "comick": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "ykmh": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "zaimanhua": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "ManHuaGui": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "manwaba": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "lanraragi": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "komga": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "comic_walker": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "mh1234": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "ccc": {
-      "auth": "ccc",
-      "inputs": {
-        "keyword": "女友"
-      }
-    },
-    "goda": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "mh18": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "mxs": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "manhuaren": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "hcomic": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "jcomic": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "hot_manga": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "kavita": {
-      "inputs": {
-        "keyword": "love"
-      }
-    },
-    "happy": {
-      "inputs": {
-        "keyword": "love"
-      }
-    }
+    "goda": { "inputs": { "keyword": "love" } },
+    "happy": { "inputs": { "keyword": "love" } },
+    "hcomic": { "inputs": { "keyword": "love" } },
+    "hitomi": { "inputs": { "keyword": "love" } },
+    "hot_manga": { "inputs": { "keyword": "love" } },
+    "ikmmh": { "inputs": { "keyword": "love" } },
+    "jcomic": { "inputs": { "keyword": "love" } },
+    "jm": { "inputs": { "keyword": "love" } },
+    "kavita": { "inputs": { "keyword": "love" } },
+    "komga": { "inputs": { "keyword": "love" } },
+    "Komiic": { "inputs": { "keyword": "love" } },
+    "lanraragi": { "inputs": { "keyword": "love" } },
+    "manga_dex": { "inputs": { "keyword": "love" } },
+    "ManHuaGui": { "auth": "ManHuaGui", "inputs": { "keyword": "love" } },
+    "manhuaren": { "inputs": { "keyword": "love" } },
+    "manwaba": { "inputs": { "keyword": "love" } },
+    "mh1234": { "inputs": { "keyword": "love" } },
+    "mh18": { "inputs": { "keyword": "love" } },
+    "mxs": { "auth": "mxs", "inputs": { "keyword": "love" } },
+    "nhentai": { "inputs": { "keyword": "love" } },
+    "picacg": { "inputs": { "keyword": "漫画" }, "auth": "picacg" },
+    "shonen_jump_plus": { "inputs": { "keyword": "love" } },
+    "wnacg": { "inputs": { "keyword": "love" } },
+    "ykmh": { "inputs": { "keyword": "love" } },
+    "zaimanhua": { "inputs": { "keyword": "love" } }
   }
 }

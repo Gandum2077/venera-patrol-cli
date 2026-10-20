@@ -25,17 +25,10 @@
       "settings": {},
       "brokenCapabilities": {}
     },
-    "picacg": {
-      "inputs": {
-        "keyword": "漫画"
-      },
-      "auth": "picacg"
-    },
     "ehentai": {
-      "inputs": {
-        "keyword": "language:chinese"
-      },
+      "inputs": { "keyword": "language:chinese" },
       "auth": "ehentai"
-    }
+    },
+    "picacg": { "inputs": { "keyword": "漫画" }, "auth": "picacg" }
   }
 }

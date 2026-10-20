@@ -272,6 +272,29 @@ test("unknown extension gets explicit missing-input status, mutations require op
     ),
   );
 });
+test("native login cancellation requires both mutation opt-in and an explicit case", async (t) => {
+  const code = `class C extends ComicSource {name='C';key='fixture';version='1.0.0';account={onLoginCancel:()=>{this.deleteData('account');return 'cancelled'}}}`;
+  for (const allowMutations of [false, true]) {
+    for (const explicitCase of [false, true]) {
+      const config = await setup(t, {
+        code,
+        sources: { fixture: {
+          allowMutations,
+          ...(explicitCase ? { cases: { "account.onLoginCancel": { args: [], expect: { equals: "cancelled" } } } } : {}),
+        } },
+      });
+      const { report } = await runPatrol(config);
+      const result = report.sources[0];
+      assert.ok(result.capabilities.some(c => c.path === "account.onLoginCancel" && c.type === "function"));
+      const stage = result.stages.find(s => s.path === "account.onLoginCancel");
+      if (allowMutations && explicitCase) assert.equal(stage.status, "passed");
+      else {
+        assert.equal(stage.status, "skipped");
+        assert.equal(stage.category, "mutation_disabled");
+      }
+    }
+  }
+});
 test("repeated page and invalid image content are diagnosed", async (t) => {
   const code = `class C extends ComicSource {name='C';key='fixture';version='1.0.0';search={load:async()=>({comics:[{id:'1',title:'A',cover:'data:text/html,not-an-image'}],maxPage:2})};comic={loadInfo:async()=>({title:'A',cover:'data:text/html,not-an-image'}),loadEp:async()=>({images:['data:text/html,not-an-image']})}}`;
   const config = await setup(t, {

@@ -81,6 +81,59 @@ export function firstChapter(chapters) {
   }
   return first;
 }
+function tagTarget(result) {
+  // Venera's nullable tag handler supports legacy action/keyword targets and
+  // PageJumpTarget's page/attributes format. No return means no navigation.
+  if (result == null) return;
+  // The native tag parser converts a top-level JS Map to a string-keyed map.
+  if (result instanceof Map) {
+    assert(
+      [...result.keys()].every((key) => typeof key === "string"),
+      "Tag jump target keys must be strings",
+    );
+    result = Object.fromEntries(result);
+  }
+  const object = (value) =>
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    !(value instanceof Map);
+  assert(object(result), "Expected tag jump target object or null");
+  const modern = result.page != null;
+  const page = modern ? result.page : result.action;
+  assert(
+    page === "search" || page === "category",
+    "Tag jump target must select search or category",
+  );
+  const attributes = modern
+    ? result.attributes
+    : { text: result.keyword, category: result.keyword, param: result.param };
+  assert(
+    attributes == null || object(attributes),
+    "Tag jump target attributes must be an object",
+  );
+  assert(
+    attributes?.options == null ||
+      (Array.isArray(attributes.options) &&
+        attributes.options.every((value) => typeof value === "string")),
+    "Tag jump target options must be strings",
+  );
+  if (page === "search")
+    assert(
+      typeof (attributes?.text ?? attributes?.keyword ?? "") === "string",
+      "Tag search keyword must be a string",
+    );
+  else {
+    assert(
+      typeof attributes?.category === "string",
+      "Tag category name must be a string",
+    );
+    assert(
+      attributes.param == null || typeof attributes.param === "string",
+      "Tag category param must be a string or null",
+    );
+  }
+}
 export function validateResult(path, result, expectation = {}) {
   if (
     /^(search\.(load|loadNext)|categoryComics\.(load|ranking\.(load|loadWithNext))|favorites\.(loadComics|loadNext))$/.test(
@@ -156,6 +209,7 @@ export function validateResult(path, result, expectation = {}) {
       result == null || (typeof result === "object" && !Array.isArray(result)),
       "Expected image loading configuration",
     );
+  else if (path === "comic.onClickTag") tagTarget(result);
   else if (
     path === "account.loginWithCookies.validate" ||
     path === "account.loginWithWebview.checkStatus"

@@ -135,6 +135,8 @@ CLI 默认自动读取配置文件同目录的 `.env`，已有环境变量优先
 
 配置中没有凭据的登录能力会报告 `credentials_missing`，不会伪造登录成功。多个登录方式分别检查，报告可能因此是 `partial`。设置按钮回调属于潜在写操作，不会因配置 settings 自动点击。
 
+巡检执行层为固定版本的 `venera-runtime` 补充 `secureRandomBytes(length)`（Node 密码学随机、同步返回 `Uint8Array`，长度为 1–4096 的整数）和 `Network.sendRequest` / `fetchBytes` 的 `extra.followRedirects:false`。手动跳转返回每一步响应，继续使用运行时 Cookie 容器保存中间响应 Cookie；`http_client` 作为宿主传输选择标记，不发送给服务器。请求的日志遮蔽选项通过独立异步上下文传递，查询、响应和传输异常中的敏感内容不进入追踪输出。源声明 `account.storeCredentials:false` 时，登录成功只持久化 `account:"ok"`；默认仍保存原有账号参数。这些是巡检适配能力，不能代替对 Venera 原生实现的验证，也不修改已安装的运行时依赖。
+
 ### 手动标记损坏
 
 - 整源：`"broken": "维护原因"` 或 `true`，不加载、不运行、不登录。
@@ -149,6 +151,8 @@ CLI 默认自动读取配置文件同目录的 `.env`，已有环境变量优先
 `inputs` 支持：`keyword`、`searchOptions`、`comicId`、`epId`、`category`、`categoryParam`、`categoryOptions`、`rankingOption`、`folderId`、`comicUrl`、`archiveId`、`tag: {namespace, value}`。
 
 默认从列表选择第一本漫画、从详情选择第一个章节、从静态/动态分类选择一个可用类别。搜索关键词没有跨源默认值，请提供有代表性的关键词。固定样本适合日常巡检，避免最新漫画本身不可读导致误报。
+
+`comic.onClickTag` 默认从详情中每个非空标签命名空间各取首个标签，分别保留执行记录；`inputs.tag` 或该函数的显式 `cases` 会改为只检查指定样本。Venera 允许此回调返回 `null` 或 `undefined` 表示该标签不跳转，巡检记录为已执行通过。非空返回值必须是有效的 `search` / `category` 跳转对象，支持旧式 `action` / `keyword` 和新版 `page` / `attributes`；异常、错误结构和不满足显式预期仍会失败。需要确认某个标签必须能跳转时，可在 `cases` 中使用 `expect.type: "object"` 或具体的 `equals` 约束。
 
 所有已枚举函数都可以用 `cases` 指定完整参数和预期结果，未知扩展函数没有用例时明确跳过。例如：
 
@@ -169,7 +173,7 @@ CLI 默认自动读取配置文件同目录的 `.env`，已有环境变量优先
 
 `expect` 支持 `type`、`equals`、`nonEmpty`、`requiredKeys`，并叠加已知接口的内置结果校验。发现页用例可显式设置 `nonEmpty: false` 接受合法空列表（例如没有关注标签时的 E-Hentai watched）；返回结构和漫画字段仍会校验。自定义分页调用只执行所给参数，不自动推断下一页。`args` 是 JSON 数组，不支持表达式或变量引用（环境变量替换除外）。
 
-发评论、点赞、评分、增删收藏/收藏夹、退出登录、设置按钮和分类按钮，仅在该源同时配置 `allowMutations: true` **以及对应函数的显式 case** 时执行。这样做可能改变账号数据，不承诺自动回滚。默认完整巡检包含这些能力的枚举和跳过原因，不能把它们视为已验证。
+发评论、点赞、评分、增删收藏/收藏夹、退出登录、取消原生登录（`account.onLoginCancel`）、设置按钮和分类按钮，仅在该源同时配置 `allowMutations: true` **以及对应函数的显式 case** 时执行。这样做可能改变账号数据，不承诺自动回滚。默认完整巡检包含这些能力的枚举和跳过原因，不能把它们视为已验证。
 
 ## 检查范围与报告
 
