@@ -11,7 +11,7 @@ import {
 import { brokenReason } from "./config.js";
 import { PatrolError, Skip, assert, classify } from "./errors.js";
 import { installObserver, httpCategory } from "./observer.js";
-import { installRuntimeCompatibility } from "./runtime-compat.js";
+import { imageUserAgent, installRuntimeCompatibility } from "./runtime-compat.js";
 import {
   validateResult,
   comicList,
@@ -299,16 +299,25 @@ export async function inspectSource(job, send) {
       return step(
         `${suffix}.download`,
         async () => {
+          // Venera defaults missing chapter headers to webUA; thumbnails also
+          // fill a missing User-Agent in an explicitly supplied header map.
+          const headers = loading.headers == null
+            ? { "user-agent": imageUserAgent }
+            : { ...loading.headers };
+          if (suffix === "thumbnail" && !Object.entries(headers).some(
+            ([key, value]) => key.toLowerCase() === "user-agent" && value != null,
+          )) headers["user-agent"] = imageUserAgent;
           const r = await globals.Network.fetchBytes(
             loading.method ?? "GET",
             loading.url ?? url,
-            loading.headers,
+            headers,
             loading.data,
             { timeout: policy.requestTimeoutMs },
           );
           if (r.status < 200 || r.status >= 300)
             throw new PatrolError(
-              httpCategory(r.status) ?? "http_error",
+              observer.evidence.get(`${suffix}.download`)?.category ??
+                httpCategory(r.status) ?? "http_error",
               `Image HTTP ${r.status}`,
             );
           assert(r.body?.byteLength > 0, "Image response is empty");

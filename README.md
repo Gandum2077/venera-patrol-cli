@@ -185,6 +185,8 @@ CLI 默认自动读取配置文件同目录的 `.env`，已有环境变量优先
 
 列表校验不是“没抛异常就通过”：检查非空列表、漫画标识/标题/封面、详情及章节形状、分页是否重复、图片能否真正解码。收藏和评论允许合法空结果。图像处理使用运行时自身的 `modifyImage` 和 `runtimeImages.decode`。按 Venera 的约定，缩略图不执行 `modifyImage` 和 `onLoadFailed`；若源声明了它们，报告会明确记录不支持。
 
+图片请求遵循 Venera 的默认 User-Agent：正文图片未提供 headers 时使用 Venera 的浏览器 UA；缩略图在 headers 中未指定 User-Agent 时也补齐该值。源提供的请求头会保留，失败恢复返回的新配置也应用相同规则。Cloudflare 挑战等反爬响应在下载阶段保留 `anti_bot` 分类，不会仅因 HTTP 403 被改记为需要登录。
+
 每次运行写入 `reports/<run-id>/`：
 
 | 文件                      | 内容                                                                      |

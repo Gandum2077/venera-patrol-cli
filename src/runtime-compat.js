@@ -1,6 +1,10 @@
 import { randomBytes } from "node:crypto";
 import { PatrolError, classify } from "./errors.js";
 
+// Venera lib/foundation/consts.dart: webUA, used by lib/network/images.dart.
+export const imageUserAgent =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36";
+
 /** Venera APIs newer than the pinned runtime, without changing that dependency. */
 export function installRuntimeCompatibility(globals, observer) {
   globals.secureRandomBytes = (length) => {

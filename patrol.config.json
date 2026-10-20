@@ -43,7 +43,7 @@
         }
       }
     },
-    "goda": { "inputs": { "keyword": "love" } },
+    "goda": { "auth": "goda", "inputs": { "keyword": "love" } },
     "happy": { "inputs": { "keyword": "love" } },
     "hcomic": { "inputs": { "keyword": "love" } },
     "hitomi": { "inputs": { "keyword": "love" } },
