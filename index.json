@@ -1,9 +1,30 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-18T10:23:29.437Z",
-  "latestRunId": "92d0a2ba-b39a-4327-b276-117b54255504",
+  "updatedAt": "2026-11-19T10:32:17.989Z",
+  "latestRunId": "de4943aa-ed4e-4249-8e97-9809b00f24e5",
   "retentionLimit": 90,
   "runs": [
+    {
+      "runId": "de4943aa-ed4e-4249-8e97-9809b00f24e5",
+      "startedAt": "2026-11-19T10:29:54.755Z",
+      "finishedAt": "2026-11-19T10:31:49.447Z",
+      "durationMs": 114692,
+      "summary": {
+        "total": 29,
+        "passed": 3,
+        "failed": 11,
+        "partial": 12,
+        "skipped": 3,
+        "listed": 0
+      },
+      "metadata": {
+        "trigger": "schedule",
+        "source": null,
+        "sourceCommit": "221621f0b91419e97f091f0d98b459f4bef56200",
+        "cliCommit": "dd6ded39844e56902d3880b1fc1c201a6d1d1fda",
+        "actionsUrl": "https://github.com/Gandum2077/venera-patrol-cli/actions/runs/44506162071"
+      }
+    },
     {
       "runId": "92d0a2ba-b39a-4327-b276-117b54255504",
       "startedAt": "2026-11-18T10:21:36.722Z",
